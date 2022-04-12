@@ -1,8 +1,7 @@
 package com.otus.homework
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import otus.homework.coroutines.R
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
