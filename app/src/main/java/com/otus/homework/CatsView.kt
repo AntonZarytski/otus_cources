@@ -3,10 +3,12 @@ package com.otus.homework
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.squareup.picasso.Picasso
 
 class CatsView @JvmOverloads constructor(
     context: Context,
@@ -28,7 +30,14 @@ class CatsView @JvmOverloads constructor(
     }
 
     override fun connectionError(message: String?) {
-        Toast.makeText(context, message, LENGTH_SHORT).show()
+        launchInMainThread {
+            Toast.makeText(context, message, LENGTH_SHORT).show()
+        }
+    }
+
+    override fun setImage(imageUrl: String) {
+        val imageView = findViewById<ImageView>(R.id.image)
+        Picasso.get().load(imageUrl).into(imageView);
     }
 }
 
@@ -36,4 +45,5 @@ interface ICatsView {
 
     fun populate(fact: Fact)
     fun connectionError(message: String?)
+    fun setImage(imageUrl: String)
 }

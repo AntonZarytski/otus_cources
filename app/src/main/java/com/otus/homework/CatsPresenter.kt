@@ -7,7 +7,7 @@ import java.net.SocketTimeoutException
 class CatsPresenter(
     private val catsService: CatsService
 ) {
-
+    private val timeoutMills: Long = 10000L
     private val exceptionHandler by lazy {
         CoroutineExceptionHandler { _, exception ->
             when (exception) {
@@ -17,35 +17,75 @@ class CatsPresenter(
         }
     }
 
-    private val presenterScope by lazy {
-        CoroutineScope(Dispatchers.Main + CoroutineName("CatsCoroutine") + exceptionHandler + SupervisorJob())
-    }
+    private val presenterScope =
+        CoroutineScope(Dispatchers.IO + CoroutineName("CatsCoroutine") + exceptionHandler + SupervisorJob())
 
-    private var ioJob: Job? = null
+
+    private var jobs: MutableList<Job> = mutableListOf()
 
     private var _catsView: ICatsView? = null
     private val catsView: ICatsView
         get() = requireNotNull(_catsView) { "VIew not provided" }
 
     fun onInitComplete() {
-        ioJob = presenterScope.launch {
-            ioThread {
-                withTimeoutOrNull(50) {
-                    catsService.getCatFact()
-                        .onSuccess {
-                            mainThread {
-                                catsView.populate(it)
-                            }
-                            throw ArithmeticException()
-                        }.onFailure {
-                            CrashMonitor.trackWarning(it)
-                            mainThread {
-                                catsView.connectionError(it.message)
-                            }
+        jobs.add(presenterScope.launch {
+            toIoThread {
+                withTimeoutOrNull(timeoutMills) {
+                    try {
+                        val fact = catsService.getCatFact()
+                        toMainThread {
+                            catsView.populate(fact)
                         }
-                } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера")
+                    } catch (e: Exception) {
+                        CrashMonitor.trackWarning(e)
+                        toMainThread {
+                            catsView.connectionError(e.message)
+                        }
+                    }
+                    //TODO why doesnt work with Result<Fact>? Fact is null in onSuccess
+//                    catsService.getCatFact()
+//                        .onSuccess {
+//                            mainThread {
+//                                catsView.populate(it)
+//                            }
+//                        }.onFailure {
+//                            CrashMonitor.trackWarning(it)
+//                            mainThread {
+//                                catsView.connectionError(it.message)
+//                            }
+//                        }
+                } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера 1")
             }
-        }
+        })
+        jobs.add(presenterScope.launch {
+            toIoThread {
+                withTimeoutOrNull(timeoutMills) {
+                    try {
+                        val image = catsService.getCatImage()
+                        toMainThread {
+                            catsView.setImage(image.url)
+                        }
+                    } catch (e: Exception) {
+                        CrashMonitor.trackWarning(e)
+                        toMainThread {
+                            catsView.connectionError(e.message)
+                        }
+                    }
+                    //TODO why doesnt work with Result<Image>? error 503 every time
+//                    catsService.getCatImage()
+//                        .onSuccess {
+//                            mainThread {
+//                                catsView.setImage(it.url)
+//                            }
+//                        }.onFailure {
+//                            CrashMonitor.trackWarning(it)
+//                            mainThread {
+//                                catsView.connectionError(it.message + 2)
+//                            }
+//                        }
+                } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера 2")
+            }
+        })
     }
 
     fun attachView(catsView: ICatsView) {
@@ -54,10 +94,11 @@ class CatsPresenter(
 
     fun detachView() {
         _catsView = null
-        ioJob?.apply {
-            if (isActive) {
-                cancel()
+        for (job in jobs) {
+            if (job.isActive) {
+                job.cancel()
             }
         }
+        jobs.clear()
     }
 }
