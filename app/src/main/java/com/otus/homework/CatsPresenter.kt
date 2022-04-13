@@ -30,8 +30,17 @@ class CatsPresenter(private val catsService: CatsService) {
     fun onInitComplete() {
         launchRequest {
             toIoThread {
-                val fact = catsService.getCatFact()
+                val result = catsService.getCatFact()
                 toMainThread {
+                    when(result) {
+                        is com.otus.homework.networkUtils.NetworkResult.Success<Fact> -> {
+                            catsView.populate(result.body)
+                        }
+                        is com.otus.homework.networkUtils.NetworkResult.Fail -> {
+                            throw result.error
+//                            catsView.connectionError(result.error.message)
+                        }
+                    }
 //                    catsView.populate(fact)
                 }
 //                throw RuntimeException("test")

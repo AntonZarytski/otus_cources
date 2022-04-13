@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.otus.homework.networkUtils.NetworkResult
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -30,9 +31,16 @@ class CatsViewModel(private val catsService: CatsService) : ViewModel() {
     fun onInitComplete() {
         launchRequest {
             toIoThread {
-                val fact = catsService.getCatFact()
+                val result = catsService.getCatFact()
                 toMainThread {
-                    factVm.value = fact
+                    when(result) {
+                        is NetworkResult.Success<Fact> -> {
+                            factVm.value = result.body
+                        }
+                        is NetworkResult.Fail -> {
+                            errorVm.value = result.error.message
+                        }
+                    }
                 }
 //                throw RuntimeException("test")
             }
@@ -40,10 +48,16 @@ class CatsViewModel(private val catsService: CatsService) : ViewModel() {
 
         launchRequest {
             toIoThread {
-                val image = catsService.getCatImage()
+                val result = catsService.getCatImage()
                 toMainThread {
-                    imageVm.value = image
-                }
+                    when(result) {
+                        is NetworkResult.Success<Image> -> {
+                            imageVm.value = result.body
+                        }
+                        is NetworkResult.Fail -> {
+                            errorVm.value = result.error.message
+                        }
+                    }                }
 //                throw RuntimeException("test")
             }
         }
