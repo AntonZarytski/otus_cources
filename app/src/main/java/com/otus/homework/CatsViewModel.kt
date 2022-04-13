@@ -18,27 +18,27 @@ class CatsViewModel(private val catsService: CatsService) : ViewModel() {
     private val exceptionHandler by lazy {
         CoroutineExceptionHandler { _, exception ->
             when (exception) {
-                is SocketTimeoutException -> errorVm.value = exception.message
+                is SocketTimeoutException -> errorLd.value = exception.message
                 else -> Log.e("exceptionHandler", ": ", exception)
             }
         }
     }
 
-    val factVm = MutableLiveData<Fact>()
-    val imageVm = MutableLiveData<Image>()
-    val errorVm = MutableLiveData<String>()
+    val factLd = MutableLiveData<Fact>()
+    val imageLd = MutableLiveData<Image>()
+    val errorLd = MutableLiveData<String>()
 
     fun onInitComplete() {
         launchRequest {
             toIoThread {
                 val result = catsService.getCatFact()
                 toMainThread {
-                    when(result) {
+                    when (result) {
                         is NetworkResult.Success<Fact> -> {
-                            factVm.value = result.body
+                            factLd.value = result.body
                         }
                         is NetworkResult.Fail -> {
-                            errorVm.value = result.error.message
+                            errorLd.value = result.error.message
                         }
                     }
                 }
@@ -50,14 +50,15 @@ class CatsViewModel(private val catsService: CatsService) : ViewModel() {
             toIoThread {
                 val result = catsService.getCatImage()
                 toMainThread {
-                    when(result) {
+                    when (result) {
                         is NetworkResult.Success<Image> -> {
-                            imageVm.value = result.body
+                            imageLd.value = result.body
                         }
                         is NetworkResult.Fail -> {
-                            errorVm.value = result.error.message
+                            errorLd.value = result.error.message
                         }
-                    }                }
+                    }
+                }
 //                throw RuntimeException("test")
             }
         }
@@ -71,7 +72,7 @@ class CatsViewModel(private val catsService: CatsService) : ViewModel() {
                 } catch (e: Exception) {
                     CrashMonitor.trackWarning(e)
                     toMainThread {
-                        errorVm.value = e.message
+                        errorLd.value = e.message
                     }
                 }
             } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера")

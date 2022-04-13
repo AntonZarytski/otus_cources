@@ -28,13 +28,13 @@ class MainActivity : AppCompatActivity() {
         if (catsViewModel != null) {
             view.viewModel = catsViewModel
             catsViewModel?.onInitComplete()
-            catsViewModel?.imageVm?.observe(this) { image ->
+            catsViewModel?.imageLd?.observe(this) { image ->
                 view.setImage(image.url)
             }
-            catsViewModel?.factVm?.observe(this) { fact ->
+            catsViewModel?.factLd?.observe(this) { fact ->
                 view.populate(fact)
             }
-            catsViewModel?.errorVm?.observe(this) { message ->
+            catsViewModel?.errorLd?.observe(this) { message ->
                 view.connectionError(message)
             }
         }

@@ -1,6 +1,7 @@
 package com.otus.homework
 
 import android.util.Log
+import com.otus.homework.networkUtils.NetworkResult
 import kotlinx.coroutines.*
 import java.net.SocketTimeoutException
 
@@ -18,8 +19,7 @@ class CatsPresenter(private val catsService: CatsService) {
     }
 
     private val presenterScope =
-        CoroutineScope(Dispatchers.IO + CoroutineName("CatsCoroutine") + exceptionHandler + SupervisorJob())
-
+        CoroutineScope(Dispatchers.Main + CoroutineName("CatsCoroutine") + exceptionHandler + SupervisorJob())
 
     private var jobs: MutableList<Job> = mutableListOf()
 
@@ -32,53 +32,33 @@ class CatsPresenter(private val catsService: CatsService) {
             toIoThread {
                 val result = catsService.getCatFact()
                 toMainThread {
-                    when(result) {
-                        is com.otus.homework.networkUtils.NetworkResult.Success<Fact> -> {
+                    when (result) {
+                        is NetworkResult.Success<Fact> -> {
                             catsView.populate(result.body)
                         }
-                        is com.otus.homework.networkUtils.NetworkResult.Fail -> {
+                        is NetworkResult.Fail -> {
                             throw result.error
-//                            catsView.connectionError(result.error.message)
                         }
                     }
-//                    catsView.populate(fact)
                 }
 //                throw RuntimeException("test")
-//                TODO why doesnt work with Result < Fact >? Fact is null in onSuccess
-//                catsService.getCatFact()
-//                    .onSuccess {
-//                        mainThread {
-//                            catsView.populate(it)
-//                        }
-//                    }.onFailure {
-//                        CrashMonitor.trackWarning(it)
-//                        mainThread {
-//                            catsView.connectionError(it.message)
-//                        }
-//                    }
             }
         }
         launchRequest {
-
             toIoThread {
                 withTimeoutOrNull(timeoutMills) {
-                    val image = catsService.getCatImage()
+                    val result = catsService.getCatImage()
                     toMainThread {
-//                        catsView.setImage(image.url)
+                        when (result) {
+                            is NetworkResult.Success<Image> -> {
+                                catsView.setImage(result.body.url)
+                            }
+                            is NetworkResult.Fail -> {
+                                throw result.error
+                            }
+                        }
                     }
 //                    throw RuntimeException("test")
-//                    TODO why doesnt work with Result < Image >? error 503 every time
-//                    catsService.getCatImage()
-//                        .onSuccess {
-//                            mainThread {
-//                                catsView.setImage(it.url)
-//                            }
-//                        }.onFailure {
-//                            CrashMonitor.trackWarning(it)
-//                            mainThread {
-//                                catsView.connectionError(it.message + 2)
-//                            }
-//                        }
                 }
             }
         }
