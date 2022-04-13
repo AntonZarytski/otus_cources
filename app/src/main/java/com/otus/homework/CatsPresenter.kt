@@ -4,10 +4,10 @@ import android.util.Log
 import kotlinx.coroutines.*
 import java.net.SocketTimeoutException
 
-class CatsPresenter(
-    private val catsService: CatsService
-) {
+class CatsPresenter(private val catsService: CatsService) {
+
     private val timeoutMills: Long = 10000L
+
     private val exceptionHandler by lazy {
         CoroutineExceptionHandler { _, exception ->
             when (exception) {
@@ -28,50 +28,37 @@ class CatsPresenter(
         get() = requireNotNull(_catsView) { "VIew not provided" }
 
     fun onInitComplete() {
-        jobs.add(presenterScope.launch {
+        launchRequest {
             toIoThread {
-                withTimeoutOrNull(timeoutMills) {
-                    try {
-                        val fact = catsService.getCatFact()
-                        toMainThread {
-                            catsView.populate(fact)
-                        }
-                    } catch (e: Exception) {
-                        CrashMonitor.trackWarning(e)
-                        toMainThread {
-                            catsView.connectionError(e.message)
-                        }
-                    }
-                    //TODO why doesnt work with Result<Fact>? Fact is null in onSuccess
-//                    catsService.getCatFact()
-//                        .onSuccess {
-//                            mainThread {
-//                                catsView.populate(it)
-//                            }
-//                        }.onFailure {
-//                            CrashMonitor.trackWarning(it)
-//                            mainThread {
-//                                catsView.connectionError(it.message)
-//                            }
+                val fact = catsService.getCatFact()
+                toMainThread {
+//                    catsView.populate(fact)
+                }
+//                throw RuntimeException("test")
+//                TODO why doesnt work with Result < Fact >? Fact is null in onSuccess
+//                catsService.getCatFact()
+//                    .onSuccess {
+//                        mainThread {
+//                            catsView.populate(it)
 //                        }
-                } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера 1")
+//                    }.onFailure {
+//                        CrashMonitor.trackWarning(it)
+//                        mainThread {
+//                            catsView.connectionError(it.message)
+//                        }
+//                    }
             }
-        })
-        jobs.add(presenterScope.launch {
+        }
+        launchRequest {
+
             toIoThread {
                 withTimeoutOrNull(timeoutMills) {
-                    try {
-                        val image = catsService.getCatImage()
-                        toMainThread {
-                            catsView.setImage(image.url)
-                        }
-                    } catch (e: Exception) {
-                        CrashMonitor.trackWarning(e)
-                        toMainThread {
-                            catsView.connectionError(e.message)
-                        }
+                    val image = catsService.getCatImage()
+                    toMainThread {
+//                        catsView.setImage(image.url)
                     }
-                    //TODO why doesnt work with Result<Image>? error 503 every time
+//                    throw RuntimeException("test")
+//                    TODO why doesnt work with Result < Image >? error 503 every time
 //                    catsService.getCatImage()
 //                        .onSuccess {
 //                            mainThread {
@@ -83,8 +70,24 @@ class CatsPresenter(
 //                                catsView.connectionError(it.message + 2)
 //                            }
 //                        }
-                } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера 2")
+                }
             }
+        }
+    }
+
+
+    private fun launchRequest(command: suspend () -> Unit) {
+        jobs.add(presenterScope.launch {
+            withTimeoutOrNull(timeoutMills) {
+                try {
+                    command.invoke()
+                } catch (e: Exception) {
+                    CrashMonitor.trackWarning(e)
+                    toMainThread {
+                        catsView.connectionError(e.message)
+                    }
+                }
+            } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера")
         })
     }
 
