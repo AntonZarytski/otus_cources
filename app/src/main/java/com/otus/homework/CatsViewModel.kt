@@ -8,17 +8,14 @@ import com.otus.homework.networkUtils.NetworkResult
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import java.net.SocketTimeoutException
 
 class CatsViewModel(private val catsService: CatsService) : ViewModel() {
 
-    private val timeoutMills: Long = 10000L
-
     private val exceptionHandler by lazy {
         CoroutineExceptionHandler { _, exception ->
             when (exception) {
-                is SocketTimeoutException -> errorLd.value = exception.message
+                is SocketTimeoutException -> errorLd.value = "Не удалось получить ответ от серверо"
                 else -> Log.e("exceptionHandler", ": ", exception)
             }
         }
@@ -30,52 +27,40 @@ class CatsViewModel(private val catsService: CatsService) : ViewModel() {
 
     fun onInitComplete() {
         launchRequest {
-            toIoThread {
-                val result = catsService.getCatFact()
-                toMainThread {
-                    when (result) {
-                        is NetworkResult.Success<Fact> -> {
-                            factLd.value = result.body
-                        }
-                        is NetworkResult.Fail -> {
-                            errorLd.value = result.error.message
-                        }
-                    }
+            when (val result = catsService.getCatFact()) {
+                is NetworkResult.Success<Fact> -> {
+                    factLd.value = result.body
                 }
-//                throw RuntimeException("test")
+                is NetworkResult.Fail -> {
+                    errorLd.value = result.error.message
+                }
             }
+            throw RuntimeException("test")
         }
 
         launchRequest {
-            toIoThread {
-                val result = catsService.getCatImage()
-                toMainThread {
-                    when (result) {
-                        is NetworkResult.Success<Image> -> {
-                            imageLd.value = result.body
-                        }
-                        is NetworkResult.Fail -> {
-                            errorLd.value = result.error.message
-                        }
-                    }
+            when (val result = catsService.getCatImage()) {
+                is NetworkResult.Success<Image> -> {
+                    imageLd.value = result.body
                 }
-//                throw RuntimeException("test")
+                is NetworkResult.Fail -> {
+                    errorLd.value = result.error.message
+                }
             }
+//            throw RuntimeException("test")
         }
     }
 
     private fun launchRequest(command: suspend () -> Unit) {
         viewModelScope.launch(exceptionHandler + SupervisorJob()) {
-            withTimeoutOrNull(timeoutMills) {
-                try {
-                    command.invoke()
-                } catch (e: Exception) {
-                    CrashMonitor.trackWarning(e)
-                    toMainThread {
-                        errorLd.value = e.message
-                    }
+            try {
+                command.invoke()
+            } catch (e: Exception) {
+                CrashMonitor.trackWarning(e)
+                toMainThread {
+                    errorLd.value = e.message
                 }
-            } ?: throw SocketTimeoutException("Не удалось получить ответ от сервера")
+            }
         }
     }
 }

@@ -35,9 +35,9 @@ class CatsView @JvmOverloads constructor(
     }
 
     override fun connectionError(message: String?) {
-        launchInMainThread {
+//        launchInMainThread {
             Toast.makeText(context, message, LENGTH_SHORT).show()
-        }
+//        }
     }
 
     override fun setImage(imageUrl: String) {
