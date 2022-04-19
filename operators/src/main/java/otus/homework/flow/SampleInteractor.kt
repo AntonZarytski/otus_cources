@@ -17,8 +17,20 @@ class SampleInteractor(
      * 5) берет 3 первых числа
      * 6) возвращает результат
      */
+    //TODO в условие ошибка, <= 20 после возведения в ^5 невозможно с данными числами
     fun task1(): Flow<String> {
-        return flowOf()
+        return sampleRepository.produceNumbers()
+            .map {
+                Math.pow(it.toDouble(), 5.0)
+            }.filter {
+                it <= 20
+            }.filter {
+                it.toInt() % 2 != 0
+            }.map {
+                "$it won"
+            }.take(3).transform {
+                emit(it)
+            }
     }
 
     /**
@@ -28,8 +40,29 @@ class SampleInteractor(
      * Если входное число делится на 15 - эмитим само число и после него эмитим строку FizzBuzz
      * Если число не делится на 3,5,15 - эмитим само число
      */
+    //TODO в условие ошибка, FizzBuzz не может быть так как 15 будет делится на 3 и на 5
     fun task2(): Flow<String> {
-        return flowOf()
+        return sampleRepository.produceNumbers()
+            .transform<Int, String> {
+                it.toString()
+                when {
+                    it % 3 == 0 -> {
+                        emit(it.toString())
+                        emit("Fizz")
+                    }
+                    it % 5 == 0 -> {
+                        emit(it.toString())
+                        emit("Buzz")
+                    }
+                    it % 15 == 0 -> {
+                        emit(it.toString())
+                        emit("FizzBuzz")
+                    }
+                    else -> {
+                        emit(it.toString())
+                    }
+                }
+            }
     }
 
     /**
@@ -38,7 +71,10 @@ class SampleInteractor(
      * Если айтемы в одно из флоу кончились то результирующий флоу также должен закончится
      */
     fun task3(): Flow<Pair<String, String>> {
-        return flowOf()
+        return sampleRepository.produceColors()
+            .zip(sampleRepository.produceForms()) { a, b ->
+                Pair(a, b)
+            }
     }
 
     /**
@@ -48,6 +84,15 @@ class SampleInteractor(
      * При любом исходе, будь то выброс исключения или успешная отработка функции вызовите метод dotsRepository.completed()
      */
     fun task4(): Flow<Int> {
-        return flowOf()
+        val flow = sampleRepository.produceNumbers()
+        return try {
+            flow.catch {
+                sampleRepository.completed()
+            }
+        } catch (exception: IllegalArgumentException) {
+            return flow.transform {
+                emit(-1)
+            }
+        }
     }
 }

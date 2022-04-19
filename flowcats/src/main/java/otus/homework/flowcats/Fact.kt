@@ -22,3 +22,5 @@ data class Fact(
 	@field:SerializedName("updatedAt")
 	val updatedAt: String
 )
+
+val emptyFact: Fact = Fact("", true, "", "", "", true, "", "", "")

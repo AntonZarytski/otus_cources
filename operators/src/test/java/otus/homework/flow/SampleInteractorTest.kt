@@ -4,10 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -17,17 +14,20 @@ import org.junit.Test
 @ExperimentalCoroutinesApi
 class SampleInteractorTest {
 
-    val dotsRepository = mockk<SampleRepository>(relaxed = true)
-    val dotsInteractor = SampleInteractor(dotsRepository)
+    private val dotsRepository = mockk<SampleRepository>(relaxed = true)
+    private val dotsInteractor = SampleInteractor(dotsRepository)
 
     @Test
     fun `test task1`() = runBlockingTest {
         every { dotsRepository.produceNumbers() } returns flowOf(7, 12, 4, 8, 11, 5, 7, 16, 99, 1)
 
         val expected = listOf("35 won", "55 won", "25 won")
-        val actual = dotsInteractor.task1().toList()
+        val actual = dotsInteractor.task1()
+        actual.collect(){
+            println(it)
+        }
 
-        assertEquals(actual, expected)
+        assertEquals(expected, actual.toList())
     }
 
     @Test
@@ -67,9 +67,12 @@ class SampleInteractorTest {
             "21",
             "Fizz"
         )
-        val actual = dotsInteractor.task2().toList()
+        val actual = dotsInteractor.task2()
+        dotsInteractor.task2().collect{
+            println(it)
+        }
 
-        assertEquals(actual, expected)
+        assertEquals(expected, actual.toList())
     }
 
     @Test
@@ -86,7 +89,7 @@ class SampleInteractorTest {
         val expected = listOf("Red" to "Circle", "Green" to "Square", "Blue" to "Triangle")
         val actual = dotsInteractor.task3().toList()
 
-        assertEquals(actual, expected)
+        assertEquals(expected, actual)
     }
 
     @Test
