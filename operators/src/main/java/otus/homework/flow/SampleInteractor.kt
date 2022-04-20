@@ -43,6 +43,7 @@ class SampleInteractor(
     //TODO в условие ошибка, FizzBuzz не может быть так как 15 будет делится на 3 и на 5
     fun task2(): Flow<String> {
         return sampleRepository.produceNumbers()
+            //TODO почему при применении .transform несколько раз, вместо when, я получаю пустой лист
             .transform<Int, String> {
                 it.toString()
                 when {
