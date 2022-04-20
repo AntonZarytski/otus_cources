@@ -78,18 +78,24 @@ class SampleInteractor(
     }
 
     /**
-     * Реализайте функцию task4, которая обрабатывает IllegalArgumentException и в качестве фоллбека
+     * Реализайте функцию task4, которая обрабатывает SecurityException и в качестве фоллбека
      * эмитит число -1.
-     * Если тип эксепшена != IllegalArgumentException, пробросьте его дальше
+     * Если тип эксепшена != SecurityException, пробросьте его дальше
      * При любом исходе, будь то выброс исключения или успешная отработка функции вызовите метод dotsRepository.completed()
      */
     fun task4(): Flow<Int> {
         val flow = sampleRepository.produceNumbers()
         return try {
-            flow.catch {
+            flow.catch { e: Throwable ->
+                when (e) {
+                    is SecurityException -> {
+                        emit(-1)
+                    }
+                }
                 sampleRepository.completed()
+                throw e
             }
-        } catch (exception: IllegalArgumentException) {
+        } catch (exception: Throwable) {
             return flow.transform {
                 emit(-1)
             }
