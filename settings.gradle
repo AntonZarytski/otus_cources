@@ -1,3 +1,2 @@
-include ':flowcats'
-include ':operators'
-rootProject.name = "Flow"
+include ':app'
+rootProject.name = "Reactive Cats"
