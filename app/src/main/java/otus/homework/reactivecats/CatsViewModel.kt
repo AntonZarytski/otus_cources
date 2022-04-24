@@ -20,8 +20,19 @@ class CatsViewModel(
     private var requestDisposable: Disposable? = null
 
     init {
+//        requestDisposable =
+//            catsService.getCatFact()
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe({
+//                    _catsLiveData.value = Success(it)
+//                }, {
+//                    _catsLiveData.value =
+//                        Error(it.message ?: context.getString(R.string.default_error_text))
+//                    throw it
+//                })
         requestDisposable =
-            catsService.getCatFact()
+            localCatFactsGenerator.generateCatFact()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
