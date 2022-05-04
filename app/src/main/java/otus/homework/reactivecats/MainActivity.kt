@@ -1,32 +1,60 @@
 package otus.homework.reactivecats
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Toast
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.Button
 import androidx.activity.viewModels
-import com.google.android.material.snackbar.Snackbar
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 class MainActivity : AppCompatActivity() {
 
+    private val adapter = InputAdapter()
     private val diContainer = DiContainer()
-    private val catsViewModel by viewModels<CatsViewModel> {
-        CatsViewModelFactory(
-            diContainer.service,
-            diContainer.localCatFactsGenerator(applicationContext),
-            applicationContext
-        )
+
+    private val catsViewModel by viewModels<InputFactViewModel> {
+        CatsViewModelFactory(diContainer.localRepository(applicationContext))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val view = layoutInflater.inflate(R.layout.activity_main, null) as CatsView
+        val view = layoutInflater.inflate(R.layout.activity_main, null)
         setContentView(view)
-        catsViewModel.catsLiveData.observe(this) { result ->
-            when (result) {
-                is Success -> view.populate(result.fact)
-                is Error -> Toast.makeText(this, result.message, Toast.LENGTH_LONG).show()
-                ServerError -> Snackbar.make(view, "Network error", 1000).show()
-            }
+        initListeners()
+        catsViewModel.inputedFacts.observe(this) {
+            attachInputList(it)
         }
+        catsViewModel.inputError.observe(this) {
+            findViewById<TextInputLayout>(R.id.new_input_layout).error = it
+        }
+    }
+
+    private fun initListeners() {
+        val addButton = findViewById<Button>(R.id.add_input)
+        val inputEditText = findViewById<TextInputEditText>(R.id.new_input_edit)
+        addButton.setOnClickListener {
+            catsViewModel.addNewInput(inputEditText.text.toString())
+        }
+        inputEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+
+            }
+
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                findViewById<TextInputLayout>(R.id.new_input_layout).error = ""
+            }
+
+            override fun afterTextChanged(p0: Editable?) {
+            }
+
+        })
+    }
+
+    private fun attachInputList(list: List<Fact>) {
+        adapter.submitList(list)
+        findViewById<RecyclerView>(R.id.text_list).adapter = adapter
     }
 }

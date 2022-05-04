@@ -13,4 +13,22 @@
         <item tools:targetApi="l" name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="input_text_style" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MyApp.TextInputLayout.Rounded</item>
+        <item name="android:layout_margin">@dimen/base_margin</item>
+        <item name="boxStrokeWidth">@dimen/base_stroke_width</item>
+        <!--<item name="boxStrokeColor">?attr/edit_text_active_frame</item>-->
+        <!--<item name="boxStrokeColor">@color/background_til</item>-->
+        <!--<item name="hintTextColor">?attr/color_text_primary</item>-->
+    </style>
+
+
+    <style name="ShapeAppearanceOverlay.MyApp.TextInputLayout.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/base_margin</item>
+    </style>
+
+    <dimen name="base_margin">4dp</dimen>
+    <dimen name="base_stroke_width">2dp</dimen>
 </resources>
