@@ -7,25 +7,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.functions.Consumer
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
 class CatsViewModel(
-    val catsService: CatsService,
-    val localCatFactsGenerator: LocalCatFactsGenerator,
-    context: Context
+    context: Context,
+    private val catsService: CatsService,
+    private val localCatFactsGenerator: LocalCatFactsGenerator,
 ) : ViewModel() {
 
     private val _catsLiveData = MutableLiveData<Result>()
     val catsLiveData: LiveData<Result> = _catsLiveData
-    private var netDisposable: Disposable? = null
-    private var localDisposable: Disposable? = null
+    private var disposable: CompositeDisposable = CompositeDisposable()
 
     init {
         //for check task 2
-//        netDisposable =
+//        disposable.add(
 //            catsService.getCatFact()
 //                .subscribeOn(Schedulers.io())
 //                .observeOn(AndroidSchedulers.mainThread())
@@ -36,47 +34,40 @@ class CatsViewModel(
 //                        Error(it.message ?: context.getString(R.string.default_error_text))
 //                    throw it
 //                })
+//        )
 
         //For check task 4
-//        localDisposable = localCatFactsGenerator.generateCatFactPeriodically()
-//            .observeOn(AndroidSchedulers.mainThread())
-//            .subscribe({
-//                _catsLiveData.value = Success(it)
-//            }, {
-//                _catsLiveData.value =
-//                    Error(it.message ?: context.getString(R.string.default_error_text))
-//                throw it
-//            })
-
+//        disposable.add(
+//            localCatFactsGenerator.generateCatFactPeriodically()
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe({
+//                    _catsLiveData.value = Success(it)
+//                }, {
+//                    _catsLiveData.value =
+//                        Error(it.message ?: context.getString(R.string.default_error_text))
+//                    throw it
+//                })
+//        )
         //For check task 5
-        netDisposable = getFacts()
+        disposable.add(getFacts())
     }
 
     private fun getFacts() =
         Observable.interval(2, TimeUnit.SECONDS)
-            .map {
+            .flatMapSingle {
                 catsService.getCatFact()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({
-                        _catsLiveData.value = Success(it)
-                    }, {
-                        //task 3
-                        localDisposable = localCatFactsGenerator.generateCatFact()
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(Consumer {
-                                _catsLiveData.value = Success(it)
-                            })
-                    })
-            }.subscribe()
+                    .onErrorResumeNext {
+                        localCatFactsGenerator.generateCatFact()
+                    }
+            }.subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                _catsLiveData.value = Success(it)
+            }
 
     override fun onCleared() {
-        if (netDisposable != null && netDisposable?.isDisposed!!) {
-            netDisposable?.dispose()
-        }
-        if (localDisposable != null && localDisposable?.isDisposed!!) {
-            localDisposable?.dispose()
+        if (disposable.isDisposed) {
+            disposable.dispose()
         }
         super.onCleared()
     }
@@ -90,7 +81,7 @@ class CatsViewModelFactory(
     ViewModelProvider.NewInstanceFactory() {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel?> create(modelClass: Class<T>): T =
-        CatsViewModel(catsRepository, localCatFactsGenerator, context) as T
+        CatsViewModel(context, catsRepository, localCatFactsGenerator) as T
 }
 
 sealed class Result
