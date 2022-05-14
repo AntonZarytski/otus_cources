@@ -4,5 +4,5 @@ import android.content.Context
 
 class DiContainer {
 
-    fun localRepository(context: Context) = LocalRoomRepository()
+    fun localRepository(context: Context) = LocalRoomRepository(context)
 }
