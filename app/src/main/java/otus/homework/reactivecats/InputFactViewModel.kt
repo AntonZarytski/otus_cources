@@ -4,32 +4,39 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import otus.homework.reactivecats.local_repository.UserInput
 
 class InputFactViewModel(
     private val localRepository: LocalRoomRepository,
 ) : ViewModel() {
 
-    private val _inputedFacts = MutableLiveData<MutableList<Fact>>()
-    val inputedFacts: LiveData<MutableList<Fact>> = _inputedFacts
+    //из-за того, что Room привязан к livaData, то данные будут обновляться сами при insert/remove/update
+    private val _inputedFacts by lazy { localRepository.getInputList() }
+    val inputedFacts: LiveData<List<UserInput>> = _inputedFacts
 
-    private val _inputError = MutableLiveData<String>()
+    private var _inputError = MutableLiveData<String>()
     val inputError: LiveData<String> = _inputError
 
-    init {
-        _inputedFacts.value = localRepository.getInputList()
-    }
-
     fun addNewInput(newInput: String) {
-        if (newInput.isBlank()){
+        if (newInput.isBlank()) {
             _inputError.value = "text cannot be empty"
-           return
-        }
-        if (localRepository.isTextAlreadyExist(newInput)){
-            _inputError.value = "this text was already added"
             return
         }
-        localRepository.writeNewInput(newInput)
-        _inputedFacts.value = localRepository.getInputList()
+        ioThread {
+            if (localRepository.isTextAlreadyExist(newInput)) {
+                //обновлять view только в майнтреде
+                mainThread { _inputError.value = "this text was already added" }
+                return@ioThread
+            }
+            localRepository.writeNewInput(newInput)
+        }
+    }
+
+    fun removeInput(userInput: UserInput) {
+        ioThread {
+            // удаление из бд
+            localRepository.removeInput(userInput)
+        }
     }
 }
 
