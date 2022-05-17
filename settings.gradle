@@ -1,3 +1,2 @@
-include ':flowcats'
-include ':operators'
-rootProject.name = "Flow"
+include ':dagger'
+rootProject.name = "Dagger"
