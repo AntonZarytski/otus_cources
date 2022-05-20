@@ -17,6 +17,7 @@ class FragmentReceiver : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        val receiverComponent = DaggerFragmentReceiverComponent.factory().create()
         return inflater.inflate(R.layout.fragment_b, container, true)
     }
 
