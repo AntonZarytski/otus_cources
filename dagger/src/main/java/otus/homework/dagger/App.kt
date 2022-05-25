@@ -1,9 +1,10 @@
 package otus.homework.dagger
 
 import android.app.Application
+import otus.homework.dagger.di.*
+import otus.homework.dagger.di.AppModule
 
 class App : Application() {
-
 
     override fun onCreate() {
         super.onCreate()

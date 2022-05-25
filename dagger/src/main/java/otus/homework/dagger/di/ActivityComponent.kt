@@ -1,9 +1,12 @@
-package otus.homework.dagger
+package otus.homework.dagger.di
 
 import android.content.Context
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import otus.homework.dagger.ColorFlow
+import otus.homework.dagger.FragmentProducer
+import otus.homework.dagger.FragmentReceiver
 import javax.inject.Scope
 
 @ActivityScope

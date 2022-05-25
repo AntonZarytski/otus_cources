@@ -1,13 +1,14 @@
-package otus.homework.dagger
+package otus.homework.dagger.di
 
 import android.content.Context
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.get
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import otus.homework.dagger.MyViewModelFactory
+import otus.homework.dagger.ViewModelProducer
+import otus.homework.dagger.ViewModelReceiver
 import javax.inject.Scope
 
 @FragmentScope
@@ -27,7 +28,7 @@ class FragmentReceiverModule(var context: Context) {
 
     @Provides
     @FragmentScope
-    fun provideVMReceiver(owner: ViewModelStoreOwner) :  ViewModelReceiver{
+    fun provideVMReceiver(owner: ViewModelStoreOwner) : ViewModelReceiver {
         return ViewModelProvider(owner, MyViewModelFactory(context))[ViewModelReceiver::class.java]
     }
 }
@@ -49,7 +50,7 @@ class FragmentProducerModule(var context: Context) {
 
     @Provides
     @FragmentScope
-    fun provideVMReceiver(owner: ViewModelStoreOwner) :  ViewModelProducer{
+    fun provideVMReceiver(owner: ViewModelStoreOwner) : ViewModelProducer {
         return ViewModelProvider(owner, MyViewModelFactory(context))[ViewModelProducer::class.java]
     }
 }
