@@ -1,37 +1,15 @@
 package otus.homework.dagger
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import javax.inject.Inject
-import javax.inject.Scope
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
-
-    @Inject
-    lateinit var observer: Observer
-
-    lateinit var activityComponent: ActivityComponent
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        App.appComponent.injectInto(this)
+        Toast.makeText(App.appComponent.context, "context.toString()", Toast.LENGTH_LONG).show()
     }
 }
-
-interface Observer {
-    fun send(message: String)
-}
-
-class ImplObserver @Inject constructor() : Observer {
-
-    override fun send(message: String) {
-        TODO("Not yet implemented")
-    }
-
-}
-
-@Scope
-annotation class ActivityScope
-
-@Scope
-annotation class FragmentScope
